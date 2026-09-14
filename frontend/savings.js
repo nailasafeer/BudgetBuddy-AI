@@ -50,45 +50,100 @@ function renderAll() {
 }
 
 // ---------- Add funds to an existing goal ----------
-async function addFunds(id) {
-  const goal = goals.find(g => g.id == id);
+let selectedGoalId = null;
+
+function addFunds(id) {
+  const goal = goals.find(goal => goal.id == id);
+
   if (!goal) return;
 
-  const amount = Number(
-    prompt(`Add how much to "${goal.name}"?`)
-  );
+  selectedGoalId = id;
 
-  if (!amount || amount <= 0) return;
+  document.getElementById("fund-goal-name").textContent =
+    `Add money to "${goal.name}"`;
 
-  try {
-    const response = await fetch(
-      `${API_BASE}/api/goals/${id}/progress`,
-      {
-        method: "PATCH",
-        headers: authHeaders(),
-        body: JSON.stringify({ amount })
-      }
+  document.getElementById("fund-amount").value = "";
+
+  document
+    .getElementById("fund-modal")
+    .classList.remove("hidden");
+
+  document.getElementById("fund-amount").focus();
+}
+
+function closeFundModal() {
+  selectedGoalId = null;
+
+  document
+    .getElementById("fund-modal")
+    .classList.add("hidden");
+}
+
+document
+  .getElementById("cancel-fund")
+  .addEventListener("click", closeFundModal);
+
+document
+  .getElementById("confirm-fund")
+  .addEventListener("click", async () => {
+    const goal = goals.find(goal => goal.id == selectedGoalId);
+
+    const amount = Number(
+      document.getElementById("fund-amount").value
     );
 
-    const data = await response.json();
-
-    if (response.status === 401 || response.status === 422) {
-      window.location.href = "login.html";
+    if (!goal || !amount || amount <= 0) {
+      showToast("Enter a valid amount.", "error");
       return;
     }
 
-    if (!response.ok) {
-      alert(data.error || "Could not add funds");
-      return;
-    }
+    const button = document.getElementById("confirm-fund");
+    button.disabled = true;
 
-    await loadGoals();
-    renderAll();
-  } catch (error) {
-    console.error(error);
-    alert("Cannot connect to the backend server.");
-  }
-}
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/goals/${goal.id}/progress`,
+        {
+          method: "PATCH",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            amount: amount
+          })
+        }
+      );
+
+      const contentType = response.headers.get("content-type");
+      let data;
+
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        throw new Error(
+          `Backend route error (${response.status}). Check PUT /api/goals/${goal.id}`
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.msg || "Could not add savings"
+        );
+      }
+
+      goal.saved = Number(
+        data.goal?.current_saved ??
+        data.current_saved ??
+        goal.saved + amount
+      );
+
+      closeFundModal();
+      renderAll();
+      showToast("Savings added successfully.");
+    } catch (error) {
+      showToast(error.message, "error");
+    } finally {
+      button.disabled = false;
+    }
+  });
 
 // ---------- Delete a goal ----------
 async function deleteGoal(id) {
@@ -143,7 +198,7 @@ document.getElementById("goal-form").addEventListener("submit", async (e) => {
     }
 
     if (!response.ok) {
-      alert(data.error || data.msg || "Could not create goal");
+      showToast((data.error || data.msg || "Could not create goal"));
       return;
     }
 
@@ -153,10 +208,10 @@ document.getElementById("goal-form").addEventListener("submit", async (e) => {
     await loadGoals();
     renderAll();
 
-    alert(data.message || "Goal created successfully");
+    showToast((data.message || "Goal created successfully"));
   } catch (error) {
     console.error(error);
-    alert("Cannot connect to the backend server.");
+    showToast(("Cannot connect to the backend server."));
   }
 });
 

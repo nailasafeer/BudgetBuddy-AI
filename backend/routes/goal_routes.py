@@ -189,3 +189,48 @@ def delete_goal(goal_id):
     return jsonify({
         "message": "Savings goal deleted successfully"
     }), 200
+
+
+@goal_routes.route("/goals/<int:goal_id>", methods=["PUT"])
+@jwt_required()
+def update_goal(goal_id):
+    user_id = int(get_jwt_identity())
+    data = request.get_json(silent=True)
+
+    goal = SavingsGoal.query.filter_by(
+        id=goal_id,
+        user_id=user_id
+    ).first()
+
+    if not goal:
+        return jsonify({
+            "error": "Goal not found"
+        }), 404
+
+    if not data or "current_saved" not in data:
+        return jsonify({
+            "error": "Current saved amount is required"
+        }), 400
+
+    try:
+        current_saved = float(data["current_saved"])
+
+        if current_saved < 0:
+            raise ValueError
+
+    except (ValueError, TypeError):
+        return jsonify({
+            "error": "Enter a valid amount"
+        }), 400
+
+    goal.current_saved = current_saved
+    db.session.commit()
+
+    return jsonify({
+        "message": "Savings added successfully",
+        "id": goal.id,
+        "name": goal.name,
+        "target_amount": goal.target_amount,
+        "current_saved": goal.current_saved,
+        "deadline": goal.deadline.isoformat()
+    }), 200

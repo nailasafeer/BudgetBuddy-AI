@@ -5,7 +5,7 @@ function addChatBubble(text, sender) {
   const bubble = document.createElement("div");
 
   bubble.className = `chat-bubble ${sender}`;
-  bubble.textContent = text;
+  bubble.textContent = cleanChatText(text);
 
   log.appendChild(bubble);
   log.scrollTop = log.scrollHeight;
@@ -131,3 +131,20 @@ document.querySelectorAll(".chip").forEach(chip => {
 
 
 loadChatHistory();
+
+
+function cleanChatText(text) {
+  if (!text) return "";
+
+  return String(text)
+    .replace(/\*\*/g, "")
+    .replace(/\*/g, "")
+    .replace(/#{1,6}\s*/g, "")
+    .replace(/\|[-:\s|]+\|/g, "")
+    .replace(/\|/g, " ")
+    .replace(/-{3,}/g, "")
+    .replace(/\s+-\s+/g, ". ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}

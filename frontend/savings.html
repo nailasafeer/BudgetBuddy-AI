@@ -81,7 +81,24 @@
     </main>
 
   </div>
+  <div id="fund-modal" class="fund-modal hidden">
+    <div class="fund-modal-card">
+      <h2>Add Savings</h2>
+      <p id="fund-goal-name"></p>
 
+      <input type="number" id="fund-amount" placeholder="Enter amount (Rs.)" min="1">
+
+      <div class="fund-modal-actions">
+        <button type="button" id="confirm-fund" class="btn-primary">
+          Add Amount
+        </button>
+
+        <button type="button" id="cancel-fund" class="btn-secondary">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
   <script src="common.js"></script>
   <script src="savings.js"></script>
 </body>

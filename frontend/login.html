@@ -127,6 +127,34 @@
                 registerData.error || "Registration failed"
               );
             }
+            isSignup = false;
+
+            document.getElementById("auth-title").textContent =
+              "Welcome back";
+
+            document.getElementById("auth-sub").textContent =
+              "Your account was created. Please log in.";
+
+            document.getElementById("name-field").style.display =
+              "none";
+
+            document.getElementById("auth-submit-btn").textContent =
+              "Log in";
+
+            document.getElementById("switch-text").textContent =
+              "New here?";
+
+            document.getElementById("switch-btn").textContent =
+              "Create an account";
+
+            event.target.reset();
+
+            messageBox.textContent =
+              "Account created successfully. Please log in.";
+
+            messageBox.classList.add("show", "success");
+
+            return;
           }
 
           const loginResponse = await fetch(
